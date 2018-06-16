@@ -1,71 +1,42 @@
-var fs = require("fs");
-var logger = require('logzio-nodejs').createLogger({
-    token: 'ALTASdtFTGaIkdElfYMMOBQYZJkhbarW',
-    host: 'listener.logz.io',
-    type: 'dishathon'     // OPTIONAL (If none is set, it will be 'nodejs')
-});
+'use strict';
 
-// sending text
-//logger.log('This is a log message');
+const request = require('request');
 
+// Replace <Subscription Key> with your valid subscription key.
+const subscriptionKey = 'https://westcentralus.api.cognitive.microsoft.com/face/v1.0';
 
-var fs = require('fs');
-var filePath = 'data.txt';
-var file = fs.readFileSync(filePath);
-console.log('Initial File content : ' + file);
-// setInterval(function(){
-//     fs.readFileSync(filePath).toString().split("\n").forEach(function(line, index, arr) {
-//         if (index === arr.length - 1 && line === "") { return; }
-//         console.log(index + " " + line);
-//     });
-// },2000);
-var CONTEXT_DATA = {};
+// You must use the same location in your REST call as you used to get your
+// subscription keys. For example, if you got your subscription keys from
+// westus, replace "westcentralus" in the URL below with "westus".
+const uriBase = 'https://westcentralus.api.cognitive.microsoft.com/face/v1.0/detect';
 
-fs.watch(filePath, function(event, filename) {
-  if(filename && event === 'change'){
-    CONTEXT_DATA = {};
-    console.log('Event : ' + event);
-    console.log(filename + ' file Changed ...');
-    fs.readFileSync(filePath).toString().split("\n").forEach(function(line, index, arr) {
-        if (index === arr.length - 1 && line === "") { return; }
+const imageUrl =
+    'https://upload.wikimedia.org/wikipedia/commons/3/37/Dagestani_man_and_woman.jpg';
 
-        // do the magic here
-        arr = line.split("_");
-        switch(arr[0]){
-            case 'M':
-            CONTEXT_DATA.male = {};
-            CONTEXT_DATA.male.ageGroup = [];
-            for(var i=1;i<arr.length;i++){
-                CONTEXT_DATA.male.ageGroup[i-1] = parseInt(arr[i]);
-            }
-            break;
-            case 'F':
-            CONTEXT_DATA.female = {};
-            CONTEXT_DATA.female.ageGroup = [];
-            for(var i=1;i<arr.length;i++){
-                CONTEXT_DATA.female.ageGroup[i-1] = parseInt(arr[i]);
-            }
-            break;
-            case 'FC':
-            CONTEXT_DATA.female.count = parseInt(arr[1]);
-            break;
-            case 'MC':
-            CONTEXT_DATA.male.count = parseInt(arr[1]);
-            break;
-            case 'TC':
-            CONTEXT_DATA.count = parseInt(arr[1]);
-            break;
-        }
+// Request parameters.
+const params = {
+    'returnFaceId': 'true',
+    'returnFaceLandmarks': 'false',
+    'returnFaceAttributes': 'age,gender,headPose,smile,facialHair,glasses,' +
+        'emotion,hair,makeup,occlusion,accessories,blur,exposure,noise'
+};
 
-        console.log(index + " " + line);
-      });
-      console.log(CONTEXT_DATA);
-    // file = fs.readFileSync(filePath);
-    // console.log('File content at : ' + new Date() + ' is \n' + file);
-    CONTEXT_DATA.message = "dishathon";
-    logger.log(CONTEXT_DATA);
+const options = {
+    uri: uriBase,
+    qs: params,
+    body: '{"url": ' + '"' + imageUrl + '"}',
+    headers: {
+        'Content-Type': 'application/json',
+        'Ocp-Apim-Subscription-Key' : subscriptionKey
+    }
+};
+
+request.post(options, (error, response, body) => {
+  if (error) {
+    console.log('Error: ', error);
+    return;
   }
-  else{
-    console.log('filename not provided')
-  }
+  let jsonResponse = JSON.stringify(JSON.parse(body), null, '  ');
+  console.log('JSON Response\n');
+  console.log(jsonResponse);
 });
