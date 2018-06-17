@@ -20,10 +20,20 @@ console.log('Initial File content : ' + file);
 //     });
 // },2000);
 var CONTEXT_DATA = {};
+function base64_encode(file) {
+    // read binary data
+    var bitmap = fs.readFileSync(file);
+    // convert binary data to base64 encoded string
+    return new Buffer(bitmap).toString('base64');
+}
 
 fs.watch(filePath, function(event, filename) {
   if(filename && event === 'change'){
-    CONTEXT_DATA = {};
+    CONTEXT_DATA = {
+        female:{},
+        male:{}
+
+    };
     console.log('Event : ' + event);
     console.log(filename + ' file Changed ...');
     fs.readFileSync(filePath).toString().split("\n").forEach(function(line, index, arr) {
@@ -31,11 +41,13 @@ fs.watch(filePath, function(event, filename) {
 
         // do the magic here
         arr = line.split("_");
+        console.log("Length:" + arr.length + "\n");
         switch(arr[0]){
             case 'M':
             CONTEXT_DATA.male = {};
             CONTEXT_DATA.male.ageGroup = [];
             for(var i=1;i<arr.length;i++){
+              if(arr[i])
                 CONTEXT_DATA.male.ageGroup[i-1] = parseInt(arr[i]);
             }
             break;
@@ -43,17 +55,18 @@ fs.watch(filePath, function(event, filename) {
             CONTEXT_DATA.female = {};
             CONTEXT_DATA.female.ageGroup = [];
             for(var i=1;i<arr.length;i++){
+              if(arr[i])
                 CONTEXT_DATA.female.ageGroup[i-1] = parseInt(arr[i]);
             }
             break;
             case 'FC':
-            CONTEXT_DATA.female.count = parseInt(arr[1]);
+            CONTEXT_DATA.female.count = (arr.length > 1?parseInt(arr[1]): 0);
             break;
             case 'MC':
-            CONTEXT_DATA.male.count = parseInt(arr[1]);
+            CONTEXT_DATA.male.count =  (arr.length > 1?parseInt(arr[1]): 0);
             break;
             case 'TC':
-            CONTEXT_DATA.count = parseInt(arr[1]);
+            CONTEXT_DATA.count =  (arr.length > 1?parseInt(arr[1]): 0);
             break;
         }
 
